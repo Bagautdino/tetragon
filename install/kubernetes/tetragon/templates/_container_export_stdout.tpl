@@ -3,7 +3,23 @@
   image: "{{ if .Values.export.stdout.image.override }}{{ .Values.export.stdout.image.override }}{{ else }}{{ .Values.export.stdout.image.repository }}:{{ .Values.export.stdout.image.tag }}{{ end }}"
   imagePullPolicy: {{ .Values.imagePullPolicy }}
   terminationMessagePolicy: FallbackToLogsOnError
+
   env: {{- toYaml .Values.export.stdout.extraEnv | nindent 4 }}
+
+  {{- if .Values.export.stdout.extraEnvFrom }}
+  envFrom:
+  {{- toYaml .Values.export.stdout.extraEnvFrom | nindent 4 }}
+  {{- else if .Values.export.stdout.envFromSecrets }}
+  envFrom:
+  {{- range .Values.export.stdout.envFromSecrets }}
+    - secretRef:
+        name: {{ .name | default . }}
+        {{- if hasKey . "optional" }}
+        optional: {{ .optional }}
+        {{- end }}
+  {{- end }}
+  {{- end }}
+
   securityContext:
     {{- toYaml .Values.export.securityContext | nindent 4 }}
   resources:
